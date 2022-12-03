@@ -63,9 +63,9 @@ class BTree
             }
             //新插入的数据总会落到最底层的叶子节点上，所以能往子树走就往子树继续前进
             parent = curnode;
-            curnode = curnode->childs[i];//因为之前把oot赋值给了curnode，所以现在对curnode重新复制的话，给的是root节点内的childs数组的值，就是往下走了，走到了他i上的子节点上
+            curnode = curnode->childs[i];//因为之前把root赋值给了curnode，所以现在对curnode重新赋值的话，给的是root节点内的childs数组的值，就是往下走了，走到了他i上的子节点上
             //上，找这个子节点上有没有一个 data【i】能比e大，重复这样往下走。直到到叶节点，如果赋值之后的curnode为空，也就是此时的root的childs【i】为空那么就是走到了叶节点上
-            //因为如果一个节点是叶节点的话，节点内的childs数字内储存的指针节点们应该都是空
+            //因为如果一个节点是叶节点的话，节点内的childs数组内储存的指针节点们应该都是空
         }//这层while（curnode ！= nullptr）结束，也就是此时的curnode为空，已经落到了叶节点上，那么就进行在这个叶节点上进行插入的操作，也就是接下来的函数
         
         InsertDataIntoNode(curnode, e);
