@@ -36,12 +36,12 @@ class BTree
     {
         if (root == nullptr)
         {
-            root = new BTreeNode < T, M);
+            root = new BTreeNode <T, M>;
             root->data[0] = e;
             root->size = 1;
             return;//如果他是一个空的树，那么直接把这个e插到其data数组的第一个就行
         }
-        //但是如果是一个非空的树
+        //但是如果是一个非空的树,即其根节点已经被构造完成
         BTreeNode < T, M)* curnode = root;//新创建一个节点，当前节点，把root给这个当前节点
         BTreeNode < T, M)* parent = nullptr;
         while (curnode != nullptr)//判断curnode也就是root的非空的时候的各种情况
@@ -63,9 +63,10 @@ class BTree
             }
             //新插入的数据总会落到最底层的叶子节点上，所以能往子树走就往子树继续前进
             parent = curnode;
-            curnode = curnode->childs[i];
+            curnode = curnode->childs[i];//因为之前把toot赋值给了curnode，所以现在对curnode重新复制的话，给的是root节点内的childs数组的值，就是往下走了，走到了他i上的子节点上
+            //上，找这个子节点上有没有一个 data【i】能比e大，重复这样往下走。直到到叶节点
         }//这层while（curnode ！= nullptr）结束
-        //走到这里表示插入一个非空的b树
+        
         InsertDataIntoNode(curnode, e);
         //此时需要判单的是，在该阶段的数据数量是否在允许的范围内，一个四阶b树最多有三个数据，达到了四个就必须要拆分了
     }
