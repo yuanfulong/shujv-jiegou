@@ -3,7 +3,7 @@ template <typename T,int M> //t代表数据元素类型。m代表树的阶
 struct BTreeNode
 {
     T data[M];
-    BTreeNode<T,M> *childs[M+1];//子节点指针数组
+    BTreeNode<T,M> *childs[M+1];//子节点指针数组,一个名叫childs的大小为m+1的数组，里边的元素的类型都是储存BTreeNode型数据的指针
     BTreeNode<T;M> *parent;//父节点指针
     int size;//节点中的实际个数
 
@@ -20,7 +20,8 @@ struct BTreeNode
 
     }
 
-}template <typename T,int M> 
+}
+template <typename T,int M> 
 class BTree
 {
     public:
