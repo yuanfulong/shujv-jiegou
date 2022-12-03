@@ -32,6 +32,61 @@ class BTree
     ~BTree(){
         ReleaseNode(root);
     }
+    void InsertE(const T& e)//无法指定插入的位置，让程序内部自己定义
+    {
+        if (root == nullptr)
+        {
+            root = new BTreeNode < T, M);
+            root->data[0] = e;
+            root->size = 1;
+            return;//如果他是一个空的树，那么直接把这个e插到其data数组的第一个就行
+        }
+        //但是如果是一个非空的树
+        BTreeNode < T, M)* curnode = root;//新创建一个节点，当前节点，把root给这个当前节点
+        BTreeNode < T, M)* parent = nullptr;
+        while (curnode != nullptr)//判断curnode也就是root的非空的时候的各种情况
+        {
+            int i = 0;
+            //找插入的位置
+            while (i < curnode->size)//当curnode也就是root内有元素的时候，开始找插入的位置
+            {
+                if (curnode->data[i] == e)
+                    return;//如果出现了要插入的e和当前b树内的数据相同，直接返回，不做插入
+
+                if (curnode->data[i] < e)//当data内存在一个数要比e还小的时候，往后走，走到下个下标去，所以要++i
+                    ++i;
+                else
+                    break;//直到这个else被实现，就是有一个data[i]要比想插入的数e大
+                //那么break跳出循环，找到了要插入的位置i，因为要找的就是这个位置，这个刚刚好比e大的位置  
+                //即便是所有的data[i]都没有比e大的，那么依旧可以进行最后一遍++i，这个i就是e插入的位置，因为这个时候e是最大的
+                //既是把e插入在最右边，就是此时的++1之后的i
+            }
+            //新插入的数据总会落到最底层的叶子节点上，所以能往子树走就往子树继续前进
+            parent = curnode;
+            curnode = curnode->childs[i];
+        }//这层while（curnode ！= nullptr）结束
+        //走到这里表示插入一个非空的b树
+        InsertDataIntoNode(curnode, e);
+        //此时需要判单的是，在该阶段的数据数量是否在允许的范围内，一个四阶b树最多有三个数据，达到了四个就必须要拆分了
+    }
+    //向当前节点插入数据
+    int InsertDataIntoNode(BTreeNode<T, M>* curnode, const T& e) {
+        int i;
+        for (i = curnode->size - 1;i >= 0;--i)//从size = 1到0的循环，倒着，遍寻data数组
+        {
+            if (i = curnode->data[i] > e)//如果存在一个数要比e大
+            {
+                curnode->data[i + 1] = curnode->data[i];//那么把这个数放到他的下一个下标上去
+            }
+            else
+            {
+                break;
+            }
+        }
+        curnode->childs[i + 1] = e;
+        curnode->size++;
+        return (i + 1);
+    }
     private:
     BTreeNode<T,M>* root;//树根指针
     void ReleaseNode(BTreeNode<T,M>* pnode)
