@@ -1,1 +1,53 @@
+//B树每个节点的定义
+template <typename T,int M> //t代表数据元素类型。m代表树的阶
+struct BTreeNode
+{
+    T data[M];
+    BTreeNode<T,M> *childs[M+1];//子节点指针数组
+    BTreeNode<T.M> *parent;//父节点指针
+    int size;//节点中的实际个数
+
+    BTreeNode()
+    {
+        size = o;
+        for (int i = 0;i < M; ++i){
+            data[i] = -1;//随便给一个值，方便观察
+        }
+        for (int i = 0;i < M + 1; ++i){
+            childs[i] = nullptr;
+        }
+        parent = nullptr;
+
+    }
+
+}template <typename T,int M> 
+class BTree
+{
+    public:
+    BTree()
+    {
+       root = nullptr; 
+    }
+    ~BTree(){
+        ReleaseNode(root);
+    }
+    private:
+    BTreeNode<T,M>* root;//树根指针
+    void ReleaseNode(BTreeNode<T,M>* pnode)
+    {
+        if(pnode != nullptr)
+        {
+            for(int i = 0;i < (pnode->size + 1); ++i)
+            {
+                if(pnode->childs[i] != nullptr)
+                {
+                    ReleaseNode(pnode->childs[i]);
+                }
+            }
+        }
+        delete pnode;
+    }
+}
+
+
 
