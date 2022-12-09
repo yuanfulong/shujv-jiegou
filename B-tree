@@ -206,7 +206,7 @@ public:
         return depth;//节点非空就网上找他的父母，有父母就加一，最后返回了几就说明他在第几层
     }
     //获取了节点的高度，那么在遍历b树时，方便进行显示
-  void levelOrder(BTree<T, M>* tnode) {
+  void levelOrder(BTree<T, M>* tnode) {//首先确定根节点不是空的，是空的没必要打印
         if (tnode != nullptr) {
             BTreeNode<T, M> tmpnode = nullptr;
             queue<BTreeNode<T, M>*>inobj;
