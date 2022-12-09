@@ -1,0 +1,27 @@
+        if（curnode->size < M){
+        return;
+}
+ while (true)//那么如果能进行到现在，表示没有返回，就是需要进行把节点拆分的操作
+    {
+        int mid = (int)(ceil((float)M / (float)2));//ceil是用来返回大于其参数的最小整数，就是比如7除以2等3.5，那么返回4，就是向上取整了
+        //因为m路树的节点内数据不能大于m阶-1个，不能小于（m/2）-1个（向下取整
+        int mididx = mid - 1;//下标从0开始，因此-1；
+        //拆分的话，一定会产生两个新的节点，所以在这里算出中间节点的下标
+        BTreeNode<T, M>* temp1 = new BTreeNode<T, M>;
+        BTreeNode<T, M>* temp2 = new BTreeNode<T, M>;
+        //设置两个新的节点后，把值给到新节点里
+        int index = 0;
+        for (int k = 0; k < mididx; ++k)//把左边部分放到第一个新节点
+        {
+            temp1->data[index] = curnode->data[k];
+            temp1->size++;
+            index++;/
+        }
+        //放完前半部分之后把后半部分放到第二个
+        index = 0;
+        for (int k = mididx + 1; k < curnode->size; ++k) {
+            temp2->data[index] = cunode->data[k];
+             temp1->size++;
+            index++;
+
+        }
