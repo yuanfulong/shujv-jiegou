@@ -42,8 +42,8 @@ class BTree
             return;//如果他是一个空的树，那么直接把这个e插到其data数组的第一个就行
         }
         //但是如果是一个非空的树,即其根节点已经被构造完成
-        BTreeNode < T, M)* curnode = root;//新创建一个节点，当前节点，把root给这个当前节点
-        BTreeNode < T, M)* parent = nullptr;
+        BTreeNode <T, M>* curnode = root;//新创建一个节点，当前节点，把root给这个当前节点
+        BTreeNode <T, M>* parent = nullptr;
         while (curnode != nullptr)//判断curnode也就是root的非空的时候的各种情况
         {
             int i = 0;
