@@ -206,31 +206,36 @@ public:
         return depth;//节点非空就网上找他的父母，有父母就加一，最后返回了几就说明他在第几层
     }
     //获取了节点的高度，那么在遍历b树时，方便进行显示
-    void levelOrder(BTree<T, M>* tnode) {
+  void levelOrder(BTree<T, M>* tnode) {
         if (tnode != nullptr) {
-            BTreeNode<T, M> tmpode = nullptr;
+            BTreeNode<T, M> tmpnode = nullptr;
             queue<BTreeNode<T, M>*>inobj;
             inobj.push(tnode);//根节点指针入队
             int curdislvl = 1;//当前显示的是第几层，根算第一层
             while (!inobj.empty()) {//如果不为空的话进行
-                inobj.pop();//出队列
+                tmpnode = inobj.front();//设置这个节点为队列的头
+                inobj.pop();//出队列，把头给出队列
                 int lvl = getNodeLevel(tmpnode);
-                if (lvl != curdislvl)//用于换行
+                if (lvl != curdislvl)//用于换行，这个时候，如果tmp的层数不和cur一致的话，就说明到了下一层的节点，就要输出换行
                 {
                     curdislvl = lvl;
-                    cout << endl;
+                    cout << endl;//换行
                 }
-                for (int i = 0; i < tmpode->size; ++i)
+                for (int i = 0; i < tmpnode->size; ++i)
                 {
-                    cout << tmpnode->data[i] << ",";
+                    cout << tmpnode->data[i] << ",";//把我们队列头这个节点里的数据遍历输出，并且考虑到同一层有
+                    //多个节点的情况，在最后我们要输入几个空格来和同层的节点做区分
                 }
                 cout << "  ";
-                for (int i = 0; i < (tmpnode->size + 1); ++i) {
+                for (int i = 0; i < (tmpnode->size + 1); ++i) {//这里的目的是为了把我们这个pop出去的队列头的孩子们都入队
+                    //那么就会形成这种循环，队列里是头节点，头节点的孩子1，2，3.。。n，头节点第一个孩子的1到n，第二个孩子的1到n。。。
+                    //我们只要不断的循环，在循环里pop并且把pop前头的数据输出出来就可以了
                     if (tmpnode->childs[i] == nullptr) {
-                        break;
+                        break;//不断的进行入队操作，直到节点已经是叶节点跳出入队操作的循环
                     }
                     inobj.push(tmpnode->childs[i]);
                 }
+                //那么同时，在外面的大循环里，条件是不为空，就是我们没有pop完，队列里还有节点，那么我们就要对这个节点进行打印
             }
         }
     }
