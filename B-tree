@@ -190,7 +190,7 @@ public:
                 break;
             }
         }
-        curnode->childs[i + 1] = e;
+        curnode->data[i + 1] = e;
         curnode->size++;
         return (i + 1);
     }
