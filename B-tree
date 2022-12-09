@@ -1,35 +1,36 @@
+#include <stdio.h>
 //B树每个节点的定义
-template <typename T,int M> //t代表数据元素类型。m代表树的阶
+template <typename T, int M> //t代表数据元素类型。m代表树的阶
 struct BTreeNode
 {
     T data[M];
-    BTreeNode<T,M> *childs[M+1];//子节点指针数组,一个名叫childs的大小为m+1的数组，里边的元素的类型都是储存BTreeNode型数据的指针
-    BTreeNode<T,M> *parent;//父节点指针
-    int size;//节点中的实际个数
+    BTreeNode<T, M>* childs[M + 1];//子节点指针数组,一个名叫childs的大小为m+1的数组，里边的元素的类型都是储存BTreeNode型数据的指针
+    BTreeNode<T, M>* parent;//父节点指针
+      int size;//节点中的实际个数
 
     BTreeNode()
     {
         size = 0;
-        for (int i = 0;i < M; ++i){
+        for (int i = 0; i < M; ++i) {
             data[i] = -1;//随便给一个值，方便观察
         }
-        for (int i = 0;i < M + 1; ++i){
+        for (int i = 0; i < M + 1; ++i) {
             childs[i] = nullptr;
         }
         parent = nullptr;
 
     }
 
-}
-template <typename T,int M> 
+};
+template <typename T, int M>
 class BTree
 {
-    public:
+public:
     BTree()
     {
-       root = nullptr; 
+        root = nullptr;
     }
-    ~BTree(){
+    ~BTree() {
         ReleaseNode(root);
     }
     void InsertE(const T& e)//无法指定插入的位置，让程序内部自己定义
@@ -70,11 +71,113 @@ class BTree
         curnode = parent;//跳出循环后，知道了此时curnode所指的childs【i】为空，那么现在的curnode的上一级就是叶节点，在循环内我们用parent记录下来了，此时重新赋值就好
         InsertDataIntoNode(curnode, e);
         //此时需要判单的是，在该阶段的数据数量是否在允许的范围内，一个四阶b树最多有三个数据，达到了四个就必须要拆分了
+        if (curnode->size < M) {
+            return;
+        }//如果节点里的数据个数比阶数小，也就是没有超过最大m-1个数的限制
+        while (true)//那么如果能进行到现在，表示没有返回，就是需要进行把节点拆分的操作
+        {
+            int mid = (int)(ceil((float)M / (float)2));//ceil是用来返回大于其参数的最小整数，就是比如7除以2等3.5，那么返回4，就是向上取整了
+            //因为m路树的节点内数据不能大于m阶-1个，不能小于（m/2）-1个（向下取整,
+            //此时分节点的情况，一定是size等于m，也就是节点内数据个数超了，所以mid表示的是这组数据的中间的数据是第几个，比如
+            //一个四路树，最多三个数据，四个数据就算超，四个数据的情况呢么第二个就算他的中间
+            int mididx = mid - 1;//下标从0开始，因此-1；这个表示的是中间节点的下标
+            //拆分的话，一定会产生两个新的节点，所以在这里算出中间节点的下标
+            BTreeNode<T, M>* temp1 = new BTreeNode<T, M>;
+            BTreeNode<T, M>* temp2 = new BTreeNode<T, M>;
+            //设置两个新的节点后，把值给到新节点里
+            
+            for (int i = 0; i < mididx; ++i)//把左边部分放到第一个新节点，从0开始到中间节点的前一个数
+            {
+                temp1->data[i] = curnode->data[i];
+                temp1->size++;
+                
+            }
+            //放完前半部分之后把后半部分放到第二个
+
+            int k = 0;
+          
+            for (int i = mididx + 1; i < curnode->size; ++i) {//从中间节点的后一个数开始
+                temp2->data[k] = curnode->data[i];
+                temp2->size++;
+                ++k;
+
+            }
+            //curnod是有孩子的，那么拆开后，他的孩子就成为了这两个新节点的孩子
+            
+            for (int i = 0; i < mididx; ++i) {//从0开始遍历到中间前一
+                temp1->childs[i] = curnode->childs[i];//把孩子给到temp1
+                if (curnode->childs[i] != nullptr) {
+                    curnode->childs[i]->parent = temp1;//把每个孩子的父亲也设定为temp1
+                    
+                }
+            }
+            k = 0;
+            for (int i = (mididx + 1); i < curnode->size; ++i) {//从中间后一开始遍历到尾
+                temp1->childs[k] = curnode->childs[i];
+                if (curnode->childs[i] != nullptr) {
+                    curnode->childs[i]->parent = temp2;//同样的步骤，把孩子给第二个，也设第二个为后半段孩子的父亲
+                   
+                }
+                ++k;
+            }
+            //此时curnode节点里只有一个数据了,就是这个中间数据
+            curnode->childs[0] = curnode->data[mididx];
+            curnode->childs[0] = temp1;
+            curnode->childs[1] = temp2;
+            temp1->parent = curnode;
+            temp2->parent = curnode;//然后把我们作分解操作的这个节点的两个孩子，设置成这两个拆分后的节点
+            //再把这两个拆分后的节点的父亲，设置成这个被拆分的节点
+            curnode->size = 1;//固定为1了，因为只有这一个中间节点了
+            for (int k = 2; k <= M; ++k) {
+                //该节点的其他孩子全部指空
+                curnode->childs[k] = nullptr;
+            }
+            if (curnode->parent != nullptr) {
+                //和父节点合并
+                BTreeNode<T, M>* par = curnode->parent;
+                int k;
+                for (k = 0; k < par->size; ++k) {
+                    //通过循环找到该数据在父节点的位置,k就是这个位置,也就是找到一个data【k】大于curnode的data【0】
+                    if (par->data[k] < curnode->data[0]) {
+                        continue;
+                    }
+                    else
+                        break;
+                }//至此，找到了这个k的位置
+                for (int k2 = (par->size - 1); k2 >= k; --k2) {//从最后一个，逆着遍历到这个k的位置
+                    par->data[k2 + 1] = par->data[k2];
+                    par->childs[k2 + 1 + 1] = par->childs[k2 + 1];//所有的数据和指针都向右边移动，以为初始华的时候数组的大小都比原来需要
+                    //的大小大一，所以数据向右移动的时候不会被覆盖
+                }
+                //此时已经把父节点的内存腾好了，可以进行插入了
+                par->data[k] = curnode->data[0];
+                par->size++;
+                par->childs[k] = temp1;
+                temp1->parent = par;
+                par->childs[k+1] = temp1;
+                temp2->parent = par;//此时curnode只剩了一个数据，把他和到他的父亲后，他也就不存在了，那么他的两个孩子就成了他父亲的孩子了
+                delete curnode;
+                if (par->size >= M) {//加入之后，父亲节点也超过了了，继续拆分父亲
+                    curnode = par;
+                    continue;//回到while的头，继续拆分
+
+                }
+                else {
+                    break;//合并之后没满，结束
+                }
+            }
+            else {// if (curnode->parent = nullptr)
+                //没有父节点，不需要合并；
+                break;//结束循环
+            }
+        }//end while
+        return;
+      
     }
     //向当前节点插入数据
     int InsertDataIntoNode(BTreeNode<T, M>* curnode, const T& e) {
         int i;
-        for (i = curnode->size - 1;i >= 0;--i)//从size = 1到0的循环，倒着，遍寻data数组
+        for (i = curnode->size - 1; i >= 0; --i)//从size = 1到0的循环，倒着，遍寻data数组
         {
             if (i = curnode->data[i] > e)//如果存在一个数要比e大
             {
@@ -89,15 +192,15 @@ class BTree
         curnode->size++;
         return (i + 1);
     }
-    private:
-    BTreeNode<T,M>* root;//树根指针
-    void ReleaseNode(BTreeNode<T,M>* pnode)
+private:
+    BTreeNode<T, M>* root;//树根指针
+    void ReleaseNode(BTreeNode<T, M>* pnode)
     {
-        if(pnode != nullptr)
+        if (pnode != nullptr)
         {
-            for(int i = 0;i < (pnode->size + 1); ++i)
+            for (int i = 0; i < (pnode->size + 1); ++i)
             {
-                if(pnode->childs[i] != nullptr)
+                if (pnode->childs[i] != nullptr)
                 {
                     ReleaseNode(pnode->childs[i]);
                 }
@@ -105,7 +208,4 @@ class BTree
         }
         delete pnode;
     }
-}
-
-
-
+};
