@@ -104,7 +104,9 @@ public:
             }
             //curnod是有孩子的，那么拆开后，他的孩子就成为了这两个新节点的孩子
             
-            for (int i = 0; i < mididx; ++i) {//从0开始遍历到中间前一
+            for (int i = 0; i < mididx + 1; ++i) {//从0开始遍历到中间，为何这个时候不像之前把前半段数据插入到temp1一样，把中间给空出来
+                //呢（i 《 mididx），而是让他能到到下标为mididx的子节点，因为这个时候要把前后半段孩子分别分给两个节点，目的在于完整的
+                //继承，所以一定要达到，不然就会漏下一个子节点，就不完整了
                 temp1->childs[i] = curnode->childs[i];//把孩子给到temp1
                 if (curnode->childs[i] != nullptr) {
                     curnode->childs[i]->parent = temp1;//把每个孩子的父亲也设定为temp1
@@ -191,6 +193,46 @@ public:
         curnode->childs[i + 1] = e;
         curnode->size++;
         return (i + 1);
+    }
+    
+    //获取某个节点的高度
+    int getNodeLevel(BTreeNode<T, M>* tnode) {
+        int depth = 0;
+        while (tnode != nullptr )
+        {
+            tnode = tnode->parent;
+            depth++;
+        }
+        return depth;//节点非空就网上找他的父母，有父母就加一，最后返回了几就说明他在第几层
+    }
+    //获取了节点的高度，那么在遍历b树时，方便进行显示
+    void levelOrder(BTree<T, M>* tnode) {
+        if (tnode != nullptr) {
+            BTreeNode<T, M> tmpode = nullptr;
+            queue<BTreeNode<T, M>*>inobj;
+            inobj.push(tnode);//根节点指针入队
+            int curdislvl = 1;//当前显示的是第几层，根算第一层
+            while (!inobj.empty()) {//如果不为空的话进行
+                inobj.pop();//出队列
+                int lvl = getNodeLevel(tmpnode);
+                if (lvl != curdislvl)//用于换行
+                {
+                    curdislvl = lvl;
+                    cout << endl;
+                }
+                for (int i = 0; i < tmpode->size; ++i)
+                {
+                    cout << tmpnode->data[i] << ",";
+                }
+                cout << "  ";
+                for (int i = 0; i < (tmpnode->size + 1); ++i) {
+                    if (tmpnode->childs[i] == nullptr) {
+                        break;
+                    }
+                    inobj.push(tmpnode->childs[i]);
+                }
+            }
+        }
     }
 private:
     BTreeNode<T, M>* root;//树根指针
