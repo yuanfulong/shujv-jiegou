@@ -239,6 +239,228 @@ public:
             }
         }
     }
+    void DeleteElem(const T& e) {
+        if (root == nullptr)//空树
+        {
+            return;
+        }
+        BTreeNode<T, M>* curnode = root;
+        BTreeNode<T, M>* parent;
+        bool iffind = false;
+        int idx = 0;//该数据在该节点中的下标
+        while (curnode != nullptr) {//找到节点中是不是有这个数据
+            idx = 0;//下标每次从0开始
+            while (idx < curnode->size) {
+                if (curnode->data[idx] == e) {
+                    iffind = true;
+                    break;
+                }
+                if (curnode->data[idx] < e) {
+                    ++idx;
+                }
+                else
+                    break;
+            }
+            if (iffind = true)
+                break;
+            parent = curnode;
+            curnode = curnode->childs[idx];
+        }
+        if (iffind == false)
+            return;
+        //没炸到就直接返回了，不会进行下边的操作
+        //找到后，计算每个节点最多几个数据，最少几个
+        int mindata = (int)(ceil((float)M / (float)2));
+        mindata -= 1;//最少的节点个数 m除以2减去一
+        int maxdata = M - 1;
+        //判断所删除的数据是否位于终端节点
+        if (curnode->childs[0] != nullptr) {
+            BTreeNode<T, M>* lefchild = curnode->childs[idx];//找到左子树的idx下标
+            //利用该左子树一直向右侧找
+            BTreeNode<T, M>* tmpchild = lefchild;
+            BTreeNode<T, M>* rightchild = lefchild;
+            while (tmpchild != nullptr) {
+                rightchild = tmpchild;
+
+                tmpchild = tmpchild->childs[tmpchild->size];//找最右侧指针
+
+            }
+            //非终端的删除转化成对终端的删除
+            T tmpvalue = curnode->data[idx];
+            curnode->data[idx] = rightchild->data[rightchild->size - 1];//所找到的终端节点的数据
+            rightchild->data[rightchild->size - 1] = tmpvalue;
+            //让curnode始终指向被删除的节点；让idx始终代表被删除数据在该节点中的下标
+            curnode = rightchild;
+            idx = rightchild->size - 1;
+
+        }//现在，删除的数据一定会位于终端节点
+        //那么进行删除
+        for (int i = (idx + 1); i < curnode->size; ++i) {
+            curnode->data[i - 1] = curnode->data[i];
+        }
+        curnode->size--;
+        //因为是终端节点，这种节点的子节点指针全部是空的，因此不需要处理
+        //此时是根节点也不需要处理，也是直接返回
+        if (root == curnode)
+            return;
+        //走到这里就是非根节点了
+        if (curnode->size >= mindata)//删除数据后。节点中的数据不低于下限。直接返回不用处理
+            return;
+        //那么走到这一步，说明需要合并，因为数据过少
+        while (true)
+        {
+            //先看兄弟节点中多不多，先借兄弟的，借的时候采用父子换位的方法，优先考察左侧兄弟，不行的话考察右侧兄弟
+            int childidx = -1;//当前被删的数据的节点位于父亲节点的若干个子节点中的第几个。记录下标
+            int broidx = -1;
+            for (int i = 0; i <= curnode->parent->size ; i++)
+            {
+                if (curnode->parent->childs[i] == curnode)
+                {
+                    childidx = i;
+                    break;
+                }
+                
+            }
+            asssert(childidx != -1);
+            if (childidx != 0) {
+                //有左子
+                //判断左子是否够借
+                if (curnode->parent->childs[childidx - 1]->size > mindata) {
+                    broidx = childidx - 1;//记录被借节点的下标
+                }//够借
+            }
+            if (broidx == -1){
+                //要么没左子，要么有但是左子数据不够，那么判断右子
+                if (childidx < (curnode->parent->size)) {
+                    //有右子
+                    if (curnode->parent->childs[childidx + 1]->size > mindata) {//够借
+                        broidx = childidx + 1;
+
+
+                    }
+                }
+            }
+            if (broidx == -1) {//表示左子或者右子可以借
+                if (broidx < childidx) {
+                    //从左子里借
+                    //父节点的数据增加到被删除了的节点中
+                    int tmpidx = InsertDataIntoNode(curnode, curnode->parent->data[childidx - 1]);
+                    //把左侧兄弟中最大值拿出来放到父节点当中
+                    BTreeNode<T, M>* bronode = curnode->parent->childs[broidx];
+                    curnode->parent->data[childidx - 1] = bronode->data[bronode->size - 1];
+                    //curnode和bronode的孩子指针可能需要更新
+                    //需要从下到上反复处理多个指针
+                    BTreeNode<T, M>* brotmpnode = bronode->childs[bronode->size];
+                    curnode->childs[tmpidx + 1] = curnode->childs[tmpidx];
+                    curnode->childs[tmpidx] = brotmpnode;
+                    bronode->childs[bronode->size] = nullptr;
+                    bronode->size--;//兄弟节点中数据数量减少1
+                }
+                else
+                {
+                    //从右子借
+                    int tmpidx = InsertDataIntoNode(curnode, curnode->parent->data[childidx]);
+                    //把右侧兄弟中最小值拿出来，放到父节点中
+                    BTreeNode<T, M>* bronode = curnode->parent->childs[broidx];
+                    curnode->parent->data[childidx] = bronode->data[0];
+                    //curnode和bronode的孩子指针可能需要更新
+                    //需要从下到上反复处理多个指针
+                    BTreeNode<T, M>* brotmpnode = bronode->childs[0];
+                    curnode->childs[tmpidx + 1] = brotmpnode;
+                    for (int i = 0; i < (bronode->size - 1); ++i) {//bronode开头数据没了，因此后面数据要依次往前
+                        bronode->data[i] = bronode->data[i + 1];
+                    }
+                    for (int i = 0; i < bronode->size; ++i) {//bronode的指针也往前移动
+                        bronode->childs[i] = bronode->childs[i + 1];
+                    }
+                    
+                    bronode->childs[bronode->size] = nullptr;
+                    bronode->size--;//兄弟节点中数据数量减少1
+
+                }
+                return;//（可以借）结束
+            }
+            //走到这里，表示左右孩子都没法借
+            //所以被删除的节点就会和父节点，兄弟节点合并（类似插入节点的逆向操作）
+            //写法不唯一
+            BTreeNode < T, M>* tmpparent = curnode->parent;
+            if (childidx == 0) {
+                //只能和右子合并，为了编码方便，向着左子集中
+                curnode->data[curnode->size] = tmpparent->data[0];//父中的节点放到左子的最右侧，因为父节点肯定比左子大
+                curnode->size++;
+                BTreeNode<T, M>* rightchild = tmpparent->childs[1];
+                for (int i = 0; i < rightchild->size; ++i) {//右子数据放入左子，右子数据位于父的右侧，肯定比父的数据大，所以依次放在左子节点数据最右侧
+                    curnode->data[curnode->size] = rightchild->data[i];
+                    curnode->childs[curnode->size] = rightchild->childs[i]; //处理孩子指针
+                    if (rightchild->childs[i])
+                        rightchild->childs[i]->parent = curnode;//改变孩子的父亲
+                    curnode->size++;
+                }
+                curnode->childs[curnode->size] = rightchild->childs[rightchild->size];
+                if (rightchild->childs[rightchild->size])
+                    rightchild->childs[rightchild->size]->parent = curnode;//孩子的父亲也要改变
+                //处理父节点数据接下来
+                for (int i = 0; i < tmpparent->size; ++i) {
+                    tmpparent->data[i - 1] = tmpparent->data[i];
+                }
+                //处理父节点数据，根据具体观察删除操作而实现的代码
+                tmpparent->childs[0] = curnode;
+                for (int i = 2; i < tmpparent->size + 1; ++i) {
+                    tmpparent->childs[i - 1] = tmpparent->childs[i];
+                }
+                tmpparent->childs[tmpparent->size] = nullptr;//所有指针往前面搬了，最后一个指针就自然是空指针了
+                tmpparent->size--;
+                delete rightchild;//把右侧节点删除
+                curnode = tmpparent;//把父节点当做当前节点
+
+            }
+            else {
+                //有左子，和左子合并，数据向着左子集中
+                BTreeNode<T, M>* leftchild = tmpparent->childs[childidx - 1];
+                leftchild->data[leftchild->size] = tmpparent->data[childidx - 1];//父中数据放在做孩子。父中数据肯定比左子都要大，因此放在左子节点数据最右侧
+                leftchild->size++;
+                for (int i = 0; i < curnode->size; ++i) {//curnode数据放进左子，curnode数据位于父的右侧，因此比父的数据更大，所以依次
+                    // 放进左子节点其他数据最右侧
+                    leftchild->data[leftchild->size] = curnode->data[i];
+                    leftchild->childs[leftchild->size] = curnode->childs[i];//处理指向孩子的指针
+                    if (curnode->childs[i])
+                        curnode->childs[i]->parent = leftchild;//孩子的父亲也要改变
+                    leftchild->size++;
+                }
+                leftchild->childs[leftchild->size] = curnode->childs[curnode->size];
+                if (curnode->childs[curnode->size]) {
+                    curnode->childs[curnode->size]->parent = leftchild;//改变孩子的父亲
+                }
+                //处理父节点数据
+                for (int i = childidx; i < tmpparent->size; ++i) {
+                    tmpparent->data[i - 1] = tmpparent->data[i];
+                }
+                //处理父节点指针
+                for (int i = childidx; i < tmpparent->size + 1; ++i) {
+                    tmpparent->childs[i - 1] = tmpparent->childs[i];
+                }
+                tmpparent->childs[tmpparent->size] = nullptr;//指针往前挪了，最后一个指针自然给空
+                tmpparent->size--;
+                delete curnode;//删除左侧节点
+                curnode = tmpparent;//父节点作为当前节点
+            }
+            if (curnode->size >= mindata)
+                return;//删除数据之后节点数量不低于下限，直接返回，不处理
+            //如果是根节点，额外进行判断
+            if (curnode = root) {
+                if (curnode->size > 0)//根节点有数据就可以
+                    return;
+                //如果走到这。证明根节点没数据了，证明原来就只有一个数据，删除之后被合并之后没数据了
+                root = curnode->childs[0];//根的孩子作为新的根
+                curnode->childs[0]->parent = nullptr;//新根的父亲就自然是空了
+                delete curnode;//然后删除原来节点
+                return;
+            }
+        }//进行删除
+
+            
+
+    }//整个删除函数
 private:
     BTreeNode<T, M>* root;//树根指针
     void ReleaseNode(BTreeNode<T, M>* pnode)
